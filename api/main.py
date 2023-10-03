@@ -138,6 +138,30 @@ def sentiment_analysis(year: int):
         'Positive': sentiment_counts.get(2, 0).item()
     }
 
+def user_recommendation(user_id: str):
+
+    # Filtrar las reseñas del usuario
+    user_reviews = df_user_reviews[df_user_reviews['user_id'] == user_id]
+
+    # Obtener los juegos que el usuario ha recomendado
+    juegos_recomendados = user_reviews[user_reviews['recommend'] == 1]['item_id']
+
+    # Obtener usuarios similares
+    usuarios_similares = df_user_reviews[df_user_reviews['item_id'].isin(juegos_recomendados)]['user_id'].unique()
+
+    # Filtrar recomendaciones de usuarios similares
+    recomendaciones = df_user_reviews[df_user_reviews['user_id'].isin(usuarios_similares)]
+    recomendaciones = recomendaciones[recomendaciones['recommend'] == 1]
+
+    # Contar la cantidad de recomendaciones por juego
+    total_recomendaciones = recomendaciones['item_id'].value_counts()
+
+    # Obtener los nombres de los juegos (sin repetir)
+    juegos_recomendados = total_recomendaciones.head(5).index
+    juegos_recomendados_nombres = df_steam_games[df_steam_games['id'].isin(juegos_recomendados)]['app_name'].unique()
+
+    return juegos_recomendados_nombres.tolist()
+
 # Registrar las rutas
 @app.get('/playtimegenre/{genero}')
 def playtime_genre(genero: str):
@@ -165,3 +189,7 @@ def sentimentanalysis(year: int):
             'Message':'Something goes wrong',
             'Error' : str(e)
         }
+    
+@app.get('/userrecommendation/{user_id}')
+def userrecommendation(user_id: str):
+    return user_recommendation(user_id)
